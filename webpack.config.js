@@ -1,4 +1,5 @@
 const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: './src/index.js', // Входной файл
@@ -46,4 +47,10 @@ module.exports = {
             'Access-Control-Allow-Origin': '*', // Разрешаем все источники
         },
     },
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: './src/index.html',
+            filename: 'index.html',
+        }),
+    ],
 };
