@@ -24,14 +24,21 @@ function init() {
 
     // Добавляем обработчик кликов мыши
     window.addEventListener('click', (event) => {
-    initializeSound();
-    onSnowflakeClick(event);
-});
+        onSnowflakeClick(event);
+    });
     window.addEventListener('touchstart', (event) => {
-    initializeSound();
-    onSnowflakeClick(event);
-}, { passive: false });
+        onSnowflakeClick(event);
+    }, { passive: false });
     window.addEventListener('touchstart', onSnowflakeClick);
+
+    // Добавляем обработчик событий Telegram, если доступен
+    if (window.TelegramGameProxy) {
+        window.TelegramGameProxy.receiveEvent('myEvent', (data) => {
+            console.log('Получено событие от Telegram:', data);
+        });
+    } else {
+        console.warn('TelegramGameProxy не найден. Запустите приложение через Telegram.');
+    }
 
     // Анимация
     animate();
@@ -183,25 +190,37 @@ function initializeSound() {
     }
 }
 
+// Функция для обработки клика/касания по снежинке
 function onSnowflakeClick(event) {
-    // Получаем координаты клика
-    const mouse = new THREE.Vector2(
-        (event.clientX / window.innerWidth) * 2 - 1,
-        -(event.clientY / window.innerHeight) * 2 + 1
-    );
+    let mouse;
+    if (event.type === 'click') {
+        // Для событий клика мыши
+        mouse = new THREE.Vector2(
+            (event.clientX / window.innerWidth) * 2 - 1,
+            -(event.clientY / window.innerHeight) * 2 + 1
+        );
+    } else if (event.type === 'touchstart') {
+        // Для событий касания сенсорного экрана
+        mouse = new THREE.Vector2(
+            (event.touches[0].clientX / window.innerWidth) * 2 - 1,
+            -(event.touches[0].clientY / window.innerHeight) * 2 + 1
+        );
+    }
 
-    // Определяем объекты, с которыми пересекается луч
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(snowflakes);
+    if (mouse) {
+        // Определяем объекты, с которыми пересекается луч
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(snowflakes);
 
-    // Удаляем пересеченные снежинки
-    intersects.forEach(intersect => {
-        // popSound.play();
-        scene.remove(intersect.object);
-        snowflakes = snowflakes.filter(snowflake => snowflake !== intersect.object);
-    });
+        // Удаляем пересеченные снежинки
+        intersects.forEach(intersect => {
+            scene.remove(intersect.object);
+            snowflakes = snowflakes.filter(snowflake => snowflake !== intersect.object);
+        });
+    }
 }
+
 
 // Функция для создания начального шестиугольника
 function createHexagon(center, radius) {
